@@ -9,8 +9,8 @@ const usuariosSchema = new Schema(
     telefono: { type: String, required: true },
     rol: {
       type: String,
-      enum: ["admin", "asistente", "paciente", "super"],
-      default: "paciente",
+      enum: ["admin", "asistente", "usuario", "super"],
+      default: "usuario",
     },
     activo: { type: Boolean, default: true },
   },

@@ -10,7 +10,7 @@ module.exports = (rolesPermitidos) => {
     const token = authHeader.split(" ")[1];
     let revisarToken;
     try {
-      revisarToken = jwt.verify(token, "LLAVESECRETA");
+      revisarToken = jwt.verify(token, process.env.JWT_SECRET);
     } catch (error) {
       error.statusCode = 500;
       throw error;

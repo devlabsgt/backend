@@ -13,7 +13,7 @@ module.exports = (req, res, next) => {
   }
 
   try {
-    const revisarToken = jwt.verify(token, "LLAVESECRETA");
+    const revisarToken = jwt.verify(token, process.env.JWT_SECRET);
     req.user = revisarToken; // Almacenar los datos del usuario en la solicitud
     next();
   } catch (error) {

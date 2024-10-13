@@ -18,21 +18,23 @@ const vRol = require("../middleware/vRol");
 // CRUD Usuarios
 router
   .route("/usuarios")
-  .post(registrarUsuario) // Registrar un nuevo usuario
-  .get(obtenerUsuarios); // Obtener todos los usuarios activos
+  .post(auth, vRol(["super", "admin"]), registrarUsuario) // Solo "super" y "admin" pueden registrar un nuevo usuario
+  .get(auth, vRol(["super", "admin"]), obtenerUsuarios); // Solo "super" y "admin" pueden obtener todos los usuarios activos
 
-router.route("/usuariosI").get(obtenerUsuariosI); // Obtener todos los usuarios inactivos
+router
+  .route("/usuariosI")
+  .get(auth, vRol(["super", "admin"]), obtenerUsuariosI); // Solo "super" y "admin" pueden obtener los usuarios inactivos
 
 router
   .route("/usuarios/:id")
-  .get(obtenerUsuario) // Obtener un usuario por ID
-  .put(actualizarUsuario) // Actualizar un usuario
-  .delete(eliminarUsuario); // Eliminar un usuario
+  .get(auth, vRol(["super", "admin", "usuario"]), obtenerUsuario) // "super", "admin" y "usuario" pueden obtener un usuario por ID
+  .put(auth, vRol(["super", "admin", "usuario"]), actualizarUsuario) // "super", "admin" y "usuario" pueden actualizar un usuario
+  .delete(auth, vRol(["super", "admin"]), eliminarUsuario); // Solo "super" y "admin" pueden eliminar un usuario
 
 // Rutas para autenticación
-router.post("/iniciar", autenticarUsuario); // Iniciar sesión
+router.post("/iniciar", autenticarUsuario); // Cualquier usuario puede iniciar sesión
 
 // Ruta para restablecer la contraseña
-router.put("/reset-password", resetPassword); // Restablecer la contraseña
+router.put("/reset-password", resetPassword); // "cualquiera pueden restablecer la contraseña
 
 module.exports = router;

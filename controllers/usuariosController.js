@@ -16,10 +16,10 @@ exports.crearSuperUsuarioPorDefecto = async () => {
     // Si no existe un superusuario, crear uno por defecto
     const hashedPassword = await bcrypt.hash("super", 10); // Hashear la contraseña
     const nuevoSuperUsuario = new Usuarios({
-      nombre: "Oscar Jiménez", // Nombre por defecto
+      nombre: "Super Usuario", // Nombre por defecto
       email: "super@admin.com", // Email por defecto
       password: hashedPassword, // Usar la contraseña hasheada
-      telefono: "+123456789", // Teléfono por defecto
+      telefono: "502123456789", // Teléfono por defecto
       rol: "super",
     });
 
@@ -40,7 +40,6 @@ exports.registrarUsuario = async (req, res) => {
     if (usuarioExistente) {
       return res.status(400).json({ mensaje: "El correo ya está en uso" });
     }
-
     const hashedPassword = await bcrypt.hash(password, 12);
     const usuario = new Usuarios({
       nombre,
@@ -112,7 +111,6 @@ exports.actualizarUsuario = async (req, res) => {
 // Eliminar (marcar como inactivo)
 exports.eliminarUsuario = async (req, res) => {
   const { id } = req.params;
-
   try {
     const usuarioInactivo = await Usuarios.findByIdAndUpdate(
       id,
@@ -159,8 +157,8 @@ exports.autenticarUsuario = async (req, res) => {
         rol: usuario.rol,
         primeraVez: usuario.primeraVez,
       },
-      process.env.JWT_SECRET || "LLAVESECRETA", // Usa variable de entorno para el secreto
-      { expiresIn: "1h" }
+      process.env.JWT_SECRET, // Usa variable de entorno para el secreto
+      { expiresIn: "1m" }
     );
 
     res.json({ token });
@@ -250,15 +248,12 @@ exports.resetPassword = async (req, res) => {
   } catch (error) {
     // Si el token es inválido o ha expirado
     if (error.name === "TokenExpiredError") {
-      return res
-        .status(400)
-        .json({
-          mensaje: "El enlace ha expirado. Por favor solicita uno nuevo.",
-        });
+      return res.status(400).json({
+        mensaje: "El enlace ha expirado. Por favor solicita uno nuevo.",
+      });
     } else if (error.name === "JsonWebTokenError") {
       return res.status(400).json({ mensaje: "Token inválido." });
     }
-
     return res
       .status(500)
       .json({ mensaje: "Error al actualizar la contraseña", error });
