@@ -117,16 +117,35 @@ exports.eliminarUsuario = async (req, res) => {
       { activo: false },
       { new: true }
     );
-
     if (!usuarioInactivo) {
       return res.status(404).json({ mensaje: "Usuario no encontrado" });
     }
 
-    res.json({ mensaje: "Usuario marcado como inactivo correctamente" });
+    res.json({ mensaje: "Usuario eliminado" });
   } catch (error) {
     res
       .status(500)
-      .json({ mensaje: "Hubo un error al marcar como inactivo", error });
+      .json({ mensaje: "Hubo un error al eliminar usuario", error });
+  }
+};
+// Recuperar Usuario (marcar como activo)
+exports.recuperarUsuario = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const usuarioInactivo = await Usuarios.findByIdAndUpdate(
+      id,
+      { activo: true },
+      { new: true }
+    );
+    if (!usuarioInactivo) {
+      return res.status(404).json({ mensaje: "Usuario no encontrado" });
+    }
+
+    res.json({ mensaje: "Usuario recuperado correctamente" });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ mensaje: "Hubo un error al recuperar usuario", error });
   }
 };
 
@@ -158,7 +177,7 @@ exports.autenticarUsuario = async (req, res) => {
         primeraVez: usuario.primeraVez,
       },
       process.env.JWT_SECRET, // Usa variable de entorno para el secreto
-      { expiresIn: "1m" }
+      { expiresIn: "5h" }
     );
 
     res.json({ token });
