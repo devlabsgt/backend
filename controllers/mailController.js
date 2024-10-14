@@ -35,7 +35,16 @@ const enviarMensaje = async (req, res) => {
       to,
       subject,
       text: text || null,
-      html: html || null,
+      html:
+        html ||
+        `
+        <div style="font-family: Arial, sans-serif; text-align: center;">
+          <p>Si tienes alguna pregunta, no dudes en contactarnos:</p>
+          <a href="https://wa.me/${config.telefono}" style="display: inline-block; padding: 10px 20px; background-color: #25D366; color: white; text-decoration: none; border-radius: 5px;">
+            Contactarnos por WhatsApp
+          </a>
+        </div>
+      `,
     };
 
     transporter.sendMail(mailOptions, (error, info) => {
@@ -127,7 +136,6 @@ const enviarLinkRecuperacion = async (req, res) => {
 
     const config = await obtenerConfiguracionCorreo();
 
-    // Aquí es donde debes definir 'transporter' dentro de esta función
     const transporter = nodemailer.createTransport({
       host: config.smtpHost,
       port: config.smtpPort,
@@ -145,6 +153,10 @@ const enviarLinkRecuperacion = async (req, res) => {
         <p>Haga clic en el botón de abajo para ingresar una nueva contraseña:</p>
         <a href="${link}" style="display: inline-block; padding: 10px 20px; background-color: #007BFF; color: #fff; text-decoration: none; border-radius: 5px;">
           Restablecer contraseña
+        </a>
+        <p>Si tienes alguna pregunta, no dudes en contactarnos:</p>
+        <a href="https://wa.me/${config.telefono}" style="display: inline-block; padding: 10px 20px; background-color: #25D366; color: white; text-decoration: none; border-radius: 5px;">
+          Contactarnos por WhatsApp
         </a>
         <p>Si no solicitó este cambio, simplemente ignore este correo.</p>
       </div>
