@@ -27,9 +27,9 @@ router.route("/usuariosI/:id").put(auth, vRol(["super"]), recuperarUsuario); // 
 
 router
   .route("/usuarios/:id")
-  .get(auth, obtenerUsuario) // "super", "admin" y "usuario" pueden obtener un usuario por ID
-  .put(auth, vRol(["super", "admin", "usuario"]), actualizarUsuario) // "super", "admin" y "usuario" pueden actualizar un usuario
-  .delete(auth, vRol(["super", "admin"]), eliminarUsuario); // Solo "super" y "admin" pueden eliminar un usuario
+  .get(auth, obtenerUsuario) // Obtener un usuario por ID
+  .put(auth, vRol(["super", "admin", "usuario"]), actualizarUsuario) // Actualizar un usuario
+  .delete(auth, vRol(["super", "admin"]), eliminarUsuario); // Eliminar un usuario
 
 // Rutas para autenticación
 router.post("/iniciar", autenticarUsuario); // Cualquier usuario puede iniciar sesión

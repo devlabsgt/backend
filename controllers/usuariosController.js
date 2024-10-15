@@ -18,6 +18,7 @@ exports.crearSuperUsuarioPorDefecto = async () => {
       password: hashedPassword,
       telefono: "502123456789",
       rol: "super",
+      fechaNacimiento: new Date(1992, 5, 28), // Los meses en JavaScript son 0-indexados, así que junio es el mes 5
     });
 
     await nuevoSuperUsuario.save();
@@ -57,76 +58,77 @@ exports.registrarUsuario = async (req, res) => {
       .json({ mensaje: "Hubo un error al crear el usuario", error });
   }
 };
-
 // Controlador para actualizar usuario
 exports.actualizarUsuario = async (req, res) => {
   const { id } = req.params;
-  const {
-    nombre,
-    email,
-    telefono,
-    rol,
-    oldPassword,
-    newPassword,
-    fechaNacimiento,
-  } = req.body;
+  const { nombre, email, telefono, rol, newPassword, fechaNacimiento } =
+    req.body;
 
   try {
     let usuario = await Usuarios.findById(id);
 
     if (!usuario) {
-      return res.status(404).json({ mensaje: "Usuario no encontrado" });
+      return res
+        .status(404)
+        .json({ mensaje: `Usuario no encontrado con el ID ${id}` });
     }
 
-    if (oldPassword && newPassword) {
-      const isMatch = await bcrypt.compare(oldPassword, usuario.password);
-      if (!isMatch) {
-        return res
-          .status(400)
-          .json({ mensaje: "La contraseña antigua es incorrecta" });
-      }
-
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(newPassword, salt);
-      usuario.password = hashedPassword;
-    } else if (newPassword) {
+    // Solo actualizar la contraseña si se está enviando
+    if (newPassword) {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(newPassword, salt);
       usuario.password = hashedPassword;
     }
 
-    usuario.nombre = nombre || usuario.nombre;
-    usuario.email = email || usuario.email;
-    usuario.telefono = telefono || usuario.telefono;
-    usuario.rol = rol || usuario.rol;
-    usuario.fechaNacimiento = fechaNacimiento || usuario.fechaNacimiento; // Actualizamos la fecha de nacimiento
+    // Actualizar solo los campos enviados
+    if (nombre) usuario.nombre = nombre;
+    if (email) usuario.email = email;
+    if (telefono) usuario.telefono = telefono;
+    if (rol) usuario.rol = rol;
+
+    // Solo actualiza la fecha de nacimiento si se envía explícitamente
+    if (fechaNacimiento) {
+      usuario.fechaNacimiento = fechaNacimiento;
+    }
 
     const usuarioActualizado = await usuario.save();
     return res
       .status(200)
       .json({ mensaje: "Usuario actualizado", usuario: usuarioActualizado });
   } catch (error) {
-    return res
-      .status(500)
-      .json({ mensaje: "Error al actualizar el usuario", error });
+    console.error("Error al actualizar usuario:", error);
+    return res.status(500).json({
+      mensaje: "Error al actualizar el usuario",
+      error: error.message,
+    });
   }
 };
-
-// Eliminar (marcar como inactivo)
+// Controlador para eliminar (marcar como inactivo) un usuario
 exports.eliminarUsuario = async (req, res) => {
   const { id } = req.params;
+
+  console.log(`Intentando eliminar el usuario con ID: ${id}`); // Log para verificar si el ID llega correctamente
+
   try {
     const usuarioInactivo = await Usuarios.findById(id);
+
     if (!usuarioInactivo) {
+      console.log("Usuario no encontrado en la base de datos.");
       return res.status(404).json({ mensaje: "Usuario no encontrado" });
     }
 
+    console.log(`Usuario encontrado: ${usuarioInactivo}`); // Log para verificar el usuario encontrado
+
     await usuarioInactivo.remove(); // Usa el pre-hook de "remove" para marcar como inactivo
+    console.log(`Usuario con ID: ${id} eliminado correctamente.`);
+
     res.json({ mensaje: "Usuario eliminado" });
   } catch (error) {
-    res
-      .status(500)
-      .json({ mensaje: "Hubo un error al eliminar usuario", error });
+    console.error("Hubo un error al intentar eliminar el usuario:", error); // Log para mostrar el error en el servidor
+    res.status(500).json({
+      mensaje: "Hubo un error al eliminar usuario",
+      error: error.message,
+    });
   }
 };
 
