@@ -4,12 +4,12 @@ module.exports = (req, res, next) => {
   const authHeader = req.get("Authorization");
 
   if (!authHeader) {
-    return res.status(401).json({ mensaje: "No autenticado, no hay JWT" });
+    return res.status(401).json({ mensaje: "No hay Token" });
   }
 
   const token = authHeader.split(" ")[1];
   if (!token) {
-    return res.status(401).json({ mensaje: "No autenticado, no hay JWT" });
+    return res.status(401).json({ mensaje: "no hay Token" });
   }
 
   try {

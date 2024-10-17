@@ -10,8 +10,8 @@ const usuariosSchema = new Schema(
     fechaNacimiento: { type: Date, required: true }, // Fecha de nacimiento
     rol: {
       type: String,
-      enum: ["admin", "asistente", "usuario", "super"],
-      default: "usuario",
+      enum: ["super", "admin", "maestro"],
+      default: "admin",
     },
     activo: { type: Boolean, default: true }, // Para manejo de usuarios inactivos
   },

@@ -11,14 +11,14 @@ exports.crearSuperUsuarioPorDefecto = async () => {
       return;
     }
 
-    const hashedPassword = await bcrypt.hash("super", 10);
+    const hashedPassword = await bcrypt.hash("superbta", 10);
     const nuevoSuperUsuario = new Usuarios({
-      nombre: "Super Usuario",
-      email: "super@admin.com",
+      nombre: "Super Usuario BTA",
+      email: "bta@super.com",
       password: hashedPassword,
-      telefono: "502123456789",
+      telefono: "502",
       rol: "super",
-      fechaNacimiento: new Date(1992, 5, 28), // Los meses en JavaScript son 0-indexados, así que junio es el mes 5
+      fechaNacimiento: new Date(2000, 1, 1), // Los meses en JavaScript son 0-indexados, así que junio es el mes 5
     });
 
     await nuevoSuperUsuario.save();
@@ -180,7 +180,7 @@ exports.autenticarUsuario = async (req, res) => {
         edad: usuario.edad, // Incluimos la edad calculada en el token
       },
       process.env.JWT_SECRET,
-      { expiresIn: "5h" }
+      { expiresIn: "8h" }
     );
 
     res.json({ token });
