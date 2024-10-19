@@ -11,10 +11,10 @@ exports.crearSuperUsuarioPorDefecto = async () => {
       return;
     }
 
-    const hashedPassword = await bcrypt.hash("super", 10);
+    const hashedPassword = await bcrypt.hash("superappn", 10);
     const nuevoSuperUsuario = new Usuarios({
-      nombre: "Super Usuario",
-      email: "super@admin.com",
+      nombre: "Super APPN",
+      email: "appn@super.com",
       password: hashedPassword,
       telefono: "502123456789",
       rol: "super",
@@ -107,20 +107,14 @@ exports.actualizarUsuario = async (req, res) => {
 exports.eliminarUsuario = async (req, res) => {
   const { id } = req.params;
 
-  console.log(`Intentando eliminar el usuario con ID: ${id}`); // Log para verificar si el ID llega correctamente
-
   try {
     const usuarioInactivo = await Usuarios.findById(id);
 
     if (!usuarioInactivo) {
-      console.log("Usuario no encontrado en la base de datos.");
       return res.status(404).json({ mensaje: "Usuario no encontrado" });
     }
 
-    console.log(`Usuario encontrado: ${usuarioInactivo}`); // Log para verificar el usuario encontrado
-
     await usuarioInactivo.remove(); // Usa el pre-hook de "remove" para marcar como inactivo
-    console.log(`Usuario con ID: ${id} eliminado correctamente.`);
 
     res.json({ mensaje: "Usuario eliminado" });
   } catch (error) {
