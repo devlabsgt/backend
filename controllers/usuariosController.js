@@ -114,7 +114,9 @@ exports.eliminarUsuario = async (req, res) => {
       return res.status(404).json({ mensaje: "Usuario no encontrado" });
     }
 
-    await usuarioInactivo.remove(); // Usa el pre-hook de "remove" para marcar como inactivo
+    // Cambia el campo activo a false en lugar de eliminar el documento
+    usuarioInactivo.activo = false;
+    await usuarioInactivo.save();
 
     res.json({ mensaje: "Usuario eliminado" });
   } catch (error) {
