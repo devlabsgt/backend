@@ -1,0 +1,27 @@
+{
+  "name": "restapisnode",
+  "version": "1.0.0",
+  "description": "REST API",
+  "main": "server.js",
+  "scripts": {
+    "dev": "nodemon ./server.js",
+    "start": "node ./server.js"
+  },
+  "author": "Oscar Jiménez",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^8.5.1",
+    "moment-timezone": "^0.5.46",
+    "mongoose": "^5.13.22",
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.9.15",
+    "shortid": "^2.2.16"
+  },
+  "devDependencies": {
+    "nodemon": "^1.19.4"
+  }
+}

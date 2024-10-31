@@ -1,0 +1,63 @@
+# Dependencias de Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Archivos de entorno
+.env
+.env.test
+.env.production
+.env.local
+.env.*.local
+
+# Configuración de logs
+logs
+*.log
+logs/*.log
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Directorio de salida de pruebas de cobertura
+coverage/
+.nyc_output/
+
+# Caché y otros archivos temporales
+tmp/
+temp/
+*.tmp
+*.temp
+*.swp
+.sass-cache/
+.vscode/
+.idea/
+.DS_Store
+*.sublime*
+
+# Directorio de salida de build
+build/
+dist/
+public/
+
+# Archivos de configuración
+config/local.json
+config/local-*.json
+config/*.local.json
+
+# Editor de configuraciones
+.vscode/
+.idea/
+
+# Archivos de depuración de TypeScript
+*.tsbuildinfo
+
+# Archivos de lock de paquetería
+package-lock.json
+yarn.lock
+.pnpm-lock.yaml
+
+# Otros
+.eslintcache
