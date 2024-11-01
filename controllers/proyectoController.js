@@ -3,7 +3,8 @@ const router = express.Router();
 const { Proyecto, Actividad } = require("../models/Proyecto");
 const mongoose = require("mongoose");
 const moment = require("moment-timezone");
-
+const auth = require("../middleware/auth");
+const vRol = require("../middleware/vRol");
 // Configuración de la zona horaria de Guatemala
 moment.tz.setDefault("America/Guatemala");
 

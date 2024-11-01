@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const MailConfig = require("../models/MailConfig");
-
+const auth = require("../middleware/auth");
+const vRol = require("../middleware/vRol");
 // Función para inicializar una configuración predefinida si no existe
 const crearConfiguracionCorreoPorDefecto = async () => {
   try {

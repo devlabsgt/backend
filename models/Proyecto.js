@@ -14,6 +14,7 @@ const ProyectoSchema = new Schema(
       ref: "Usuario", // Referencia a la colección Usuario
       required: true,
     },
+
     donantes: [
       {
         donante: {
@@ -56,17 +57,14 @@ const ProyectoSchema = new Schema(
     departamento: {
       type: String,
       required: true,
-      trim: true,
     },
     municipio: {
       type: String,
       required: true,
-      trim: true,
     },
     localidad: {
       type: String,
       required: true,
-      trim: true,
     },
     codigo: {
       type: String, // Código único de 3 números y 3 letras

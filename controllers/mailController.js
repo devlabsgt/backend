@@ -3,7 +3,8 @@ const nodemailer = require("nodemailer");
 require("dotenv").config(); // Cargar variables de entorno si es necesario
 const Usuario = require("../models/Usuario"); // Modelo de usuario
 const MailConfig = require("../models/MailConfig"); // Modelo de configuración de correo
-
+const auth = require("../middleware/auth");
+const vRol = require("../middleware/vRol");
 // Función para obtener la configuración de correo desde la base de datos
 const obtenerConfiguracionCorreo = async () => {
   const config = await MailConfig.findOne(); // Buscar la configuración en la base de datos
