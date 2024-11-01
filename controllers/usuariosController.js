@@ -3,10 +3,10 @@ const router = express.Router();
 const Usuarios = require("../models/Usuario");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const auth = require("../middleware/auth"); // Ajusta la ruta según tu estructura de archivos
-const vRol = require("../middleware/vRol"); // Ajusta la ruta según tu estructura de archivos
+const auth = require("../middleware/auth");
+const vRol = require("../middleware/vRol");
 
-// Función para crear un superusuario por defecto
+//Función para crear un superusuario por defecto
 const crearSuperUsuarioPorDefecto = async () => {
   try {
     const superUsuarioExistente = await Usuarios.findOne({ rol: "Super" });
@@ -33,7 +33,7 @@ const crearSuperUsuarioPorDefecto = async () => {
     console.error("Error al crear el superusuario por defecto:", error);
   }
 };
-// Registrar usuario
+//Registrar usuario
 router.post(
   "/usuario",
   auth,
@@ -71,56 +71,63 @@ router.post(
     }
   }
 );
+//Actualizar usuario
+router.put(
+  "/usuario/:id",
+  auth,
+  vRol(["Administrador", "Super"]),
+  async (req, res) => {
+    const { id } = req.params;
+    const actualizaciones = req.body;
 
-// Actualizar usuario
-router.put("/usuario/:id", async (req, res) => {
-  const { id } = req.params;
-  const actualizaciones = req.body;
+    try {
+      // Verifica si se requiere cambio de contraseña
+      if (actualizaciones.newPassword) {
+        const hashedPassword = await bcrypt.hash(
+          actualizaciones.newPassword,
+          10
+        );
+        actualizaciones.password = hashedPassword;
+        delete actualizaciones.newPassword;
+      }
 
-  try {
-    // Verifica si se requiere cambio de contraseña
-    if (actualizaciones.newPassword) {
-      const hashedPassword = await bcrypt.hash(actualizaciones.newPassword, 10);
-      actualizaciones.password = hashedPassword;
-      delete actualizaciones.newPassword;
-    }
+      // Actualiza solo los campos recibidos en `actualizaciones`
+      const usuarioActualizado = await Usuarios.findByIdAndUpdate(
+        id,
+        { $set: actualizaciones },
+        { new: true, runValidators: true }
+      );
 
-    // Actualiza solo los campos recibidos en `actualizaciones`
-    const usuarioActualizado = await Usuarios.findByIdAndUpdate(
-      id,
-      { $set: actualizaciones },
-      { new: true, runValidators: true }
-    );
+      if (!usuarioActualizado) {
+        return res.status(404).json({
+          mensaje: `Usuario no encontrado con el ID ${id}`,
+          error: "UsuarioInexistente",
+        });
+      }
 
-    if (!usuarioActualizado) {
-      return res.status(404).json({
-        mensaje: `Usuario no encontrado con el ID ${id}`,
-        error: "UsuarioInexistente",
+      res.json({ mensaje: "Usuario actualizado", usuario: usuarioActualizado });
+    } catch (error) {
+      // Manejo de errores con detalles específicos
+      let errorMessage = "Error al actualizar el usuario";
+      let errorCode = "ErrorDesconocido";
+
+      if (error.name === "ValidationError") {
+        errorMessage = "Datos no válidos para actualizar el usuario";
+        errorCode = "ErrorValidacion";
+      } else if (error.code === 11000) {
+        errorMessage = "El correo electrónico o nombre de usuario ya existe";
+        errorCode = "ErrorDuplicado";
+      }
+
+      res.status(500).json({
+        mensaje: errorMessage,
+        codigo: errorCode,
+        detalles: error.message, // opcional: puedes eliminarlo en producción si es muy detallado
       });
     }
-
-    res.json({ mensaje: "Usuario actualizado", usuario: usuarioActualizado });
-  } catch (error) {
-    // Manejo de errores con detalles específicos
-    let errorMessage = "Error al actualizar el usuario";
-    let errorCode = "ErrorDesconocido";
-
-    if (error.name === "ValidationError") {
-      errorMessage = "Datos no válidos para actualizar el usuario";
-      errorCode = "ErrorValidacion";
-    } else if (error.code === 11000) {
-      errorMessage = "El correo electrónico o nombre de usuario ya existe";
-      errorCode = "ErrorDuplicado";
-    }
-
-    res.status(500).json({
-      mensaje: errorMessage,
-      codigo: errorCode,
-      detalles: error.message, // opcional: puedes eliminarlo en producción si es muy detallado
-    });
   }
-});
-// Autenticar usuario
+);
+//Autenticar usuario
 router.post("/iniciarSesion", async (req, res) => {
   const { email, password } = req.body;
 
@@ -153,11 +160,11 @@ router.post("/iniciarSesion", async (req, res) => {
     res.status(500).json({ mensaje: "Error al autenticar", error });
   }
 });
-// Obtener un usuario activo por su ID
-router.get("/usuario/:id", async (req, res) => {
+//Obtener un usuario activo por su ID
+router.get("/usuario/:id", auth, async (req, res) => {
   const { id } = req.params;
   try {
-    const usuario = await Usuarios.findOne({ _id: id, activo: true }).select(
+    const usuario = await Usuarios.findOne({ _id: id }).select(
       "nombre email telefono rol fechaNacimiento"
     );
     if (!usuario) {
@@ -170,8 +177,8 @@ router.get("/usuario/:id", async (req, res) => {
     res.status(500).json({ mensaje: "Error al obtener el usuario", error });
   }
 });
-// Obtener todos los usuarios activos
-router.get("/usuario", async (req, res) => {
+//Obtener todos los usuarios activos
+router.get("/usuario", auth, async (req, res) => {
   const { rol, activo } = req.query; // Agregar `activo` como parámetro de consulta
 
   try {
@@ -200,7 +207,6 @@ router.get("/usuario", async (req, res) => {
     res.status(500).json({ mensaje: "Error al obtener usuarios", error });
   }
 });
-
 // Restablecer contraseña
 router.post("/usuario/resContra", async (req, res) => {
   const { token, newPassword } = req.body;
@@ -231,6 +237,7 @@ router.post("/usuario/resContra", async (req, res) => {
     }
   }
 });
+//exportación de rutas funciones
 module.exports = {
   router,
   crearSuperUsuarioPorDefecto,
