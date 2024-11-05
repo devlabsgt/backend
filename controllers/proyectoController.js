@@ -324,41 +324,45 @@ router.get(
 );
 
 // Obtener un proyecto por ID con población completa
-router.get(
-  "/proyecto/:id",
-  // auth,
-  async (req, res) => {
-    try {
-      const proyecto = await Proyecto.findById(req.params.id)
-        .populate("encargado")
-        .populate("donantes.donante")
-        .populate("objetivosGlobales")
-        .populate("lineasEstrategicas")
-        .populate("actividadesPrincipales")
-        .populate({
-          path: "beneficiarios.beneficiario",
-          model: "Beneficiario",
-        });
+router.get("/proyecto/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
 
-      if (!proyecto) {
-        return res.status(404).json({ message: "Proyecto no encontrado" });
-      }
-      // Actualizar personas alcanzadas
-      const beneficiarios = await Beneficiario.find({
-        Proyecto: proyecto._id,
-      }).countDocuments();
-
-      if (beneficiarios !== proyecto.personasAlcanzadas) {
-        proyecto.personasAlcanzadas = beneficiarios;
-        await proyecto.save();
-      }
-
-      res.status(200).json(proyecto);
-    } catch (error) {
-      res.status(500).json({ message: "Error al obtener el proyecto", error });
+    // Validar que el ID sea un ObjectId válido
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ 
+        message: "ID de proyecto inválido",
+        error: "ID_INVALIDO"
+      });
     }
+
+    const proyecto = await Proyecto.findById(id)
+      .populate("encargado")
+      .populate("donantes.donante")
+      .populate("objetivosGlobales")
+      .populate("lineasEstrategicas")
+      .populate({
+        path: "beneficiarios.beneficiario",
+        model: "Beneficiario",
+      });
+
+    if (!proyecto) {
+      return res.status(404).json({ 
+        message: "Proyecto no encontrado",
+        error: "PROYECTO_NO_ENCONTRADO" 
+      });
+    }
+
+    res.status(200).json(proyecto);
+  } catch (error) {
+    console.error("Error al obtener el proyecto:", error);
+    res.status(500).json({ 
+      message: "Error al obtener el proyecto",
+      error: error.message,
+      details: error.stack
+    });
   }
-);
+});
 
 // Actualizar proyecto
 router.put(
