@@ -61,3 +61,6 @@ yarn.lock
 
 # Otros
 .eslintcache
+
+uploads/*
+!uploads/.gitkeep
