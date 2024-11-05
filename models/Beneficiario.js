@@ -1,6 +1,29 @@
 const mongoose = require("mongoose");
 
-// Definimos el esquema para los beneficiarios
+// Esquema de Direccion
+const DireccionSchema = mongoose.Schema({
+  departamento: {
+    type: String, // Usaremos String para almacenar el departamento
+    required: true,
+  },
+  municipio: {
+    type: String, // Usaremos String para almacenar el municipio
+    required: true,
+  },
+  localidad: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  direccion: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+});
+
+const Direccion = mongoose.model("Direccion", DireccionSchema);
+// Esquema de Beneficiario
 const BeneficiarioSchema = mongoose.Schema(
   {
     nombre: {
@@ -11,7 +34,7 @@ const BeneficiarioSchema = mongoose.Schema(
     dpi: {
       type: String,
       required: true,
-      unique: true, // Asegura que el DPI sea único
+      unique: true,
     },
     fechaNacimiento: {
       type: Date,
@@ -19,26 +42,16 @@ const BeneficiarioSchema = mongoose.Schema(
     },
     genero: {
       type: String,
-      enum: ["Masculino", "Femenino", "Otro"],
+      enum: ["Masculino", "Femenino"],
     },
     estadoCivil: {
       type: String,
       enum: ["Soltero/a", "Casado/a", "Divorciado/a", "Viudo/a"],
     },
-    departamento: {
-      type: String,
+    direccion: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Direccion", // Hace referencia a la colección de Direcciones
       required: true,
-      trim: true,
-    },
-    municipio: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    localidad: {
-      type: String,
-      required: true,
-      trim: true,
     },
     nombrePadre: {
       type: String,
@@ -55,14 +68,17 @@ const BeneficiarioSchema = mongoose.Schema(
     Proyecto: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Proyecto", // Relación con el modelo Proyecto
+        ref: "Proyecto",
       },
-    ], // Es un array de ObjectId para manejar múltiples proyectos
-    activo: { type: Boolean, default: true }, // Para manejo de beneficiarios inactivos
+    ],
+    activo: { type: Boolean, default: true },
   },
   {
     timestamps: true,
   }
 );
 
-module.exports = mongoose.model("Beneficiario", BeneficiarioSchema);
+module.exports = {
+  Beneficiario: mongoose.model("Beneficiario", BeneficiarioSchema),
+  Direccion,
+};
