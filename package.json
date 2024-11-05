@@ -13,13 +13,18 @@
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
-    "express": "^4.19.2",
+    "express": "^4.21.1",
+    "file-type": "^19.6.0",
+    "fs-extra": "^11.2.0",
     "jsonwebtoken": "^8.5.1",
     "moment-timezone": "^0.5.46",
     "mongoose": "^5.13.22",
+    "multer": "^1.4.5-lts.1",
     "node-cron": "^3.0.3",
     "nodemailer": "^6.9.15",
-    "shortid": "^2.2.16"
+    "sharp": "^0.33.5",
+    "shortid": "^2.2.16",
+    "uuid": "^11.0.2"
   },
   "devDependencies": {
     "nodemon": "^1.19.4"
