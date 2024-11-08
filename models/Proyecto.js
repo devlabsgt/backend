@@ -5,7 +5,7 @@ const Schema = mongoose.Schema;
 const ObjetivoGlobalSchema = new Schema({
   nombre: {
     type: String,
-    required: true,
+    required: [true, "El nombre del objetivo es requerido"],
     trim: true
   },
   descripcion: String
@@ -15,32 +15,87 @@ const ObjetivoGlobalSchema = new Schema({
 const LineaEstrategicaSchema = new Schema({
   nombre: {
     type: String,
-    required: true,
+    required: [true, "El nombre de la línea estratégica es requerido"],
     trim: true
   },
   descripcion: String
 });
 
-// Esquema para las actividades
-const ActividadPrincipalSchema = new Schema({
+// Esquema para las actividades del proyecto
+const ActividadSchema = new Schema({
   nombre: {
     type: String,
-    required: true,
+    required: [true, "El nombre de la actividad es requerido"],
     trim: true
   },
-  descripcion: String,
-  meta: Number,
-  indicadores: [String]
+  descripcion: {
+    type: String,
+    trim: true
+  },
+  presupuestoAsignado: {
+    type: Number,
+    required: [true, "El presupuesto de la actividad es requerido"],
+    min: [0, "El presupuesto no puede ser negativo"]
+  },
+  porcentajePresupuesto: {
+    type: Number,
+    required: true,
+    min: [0, "El porcentaje no puede ser menor a 0"],
+    max: [100, "El porcentaje no puede ser mayor a 100"]
+  },
+  beneficiariosAsociados: [{
+    beneficiario: {
+      type: Schema.Types.ObjectId,
+      ref: "Beneficiario",
+      required: true
+    },
+    fechaAsignacion: {
+      type: Date,
+      default: Date.now
+    },
+    estado: {
+      type: String,
+      enum: ["Activo", "Inactivo"],
+      default: "Activo"
+    },
+    observaciones: String
+  }],
+  fechaInicio: {
+    type: Date,
+    required: [true, "La fecha de inicio es requerida"]
+  },
+  fechaFin: {
+    type: Date,
+    required: [true, "La fecha de finalización es requerida"]
+  },
+  estado: {
+    type: String,
+    enum: ["Pendiente", "En Progreso", "Completada"],
+    default: "Pendiente"
+  },
+  avance: {
+    type: Number,
+    default: 0,
+    min: [0, "El avance no puede ser menor a 0"],
+    max: [100, "El avance no puede ser mayor a 100"]
+  },
+  resultadosEsperados: [String],
+  metasAlcanzadas: [{
+    descripcion: String,
+    fecha: Date,
+    valor: Number
+  }]
 });
 
 // Esquema para las evidencias
 const EvidenciaSchema = new Schema({
   tipo: {
     type: String,
-    required: true
+    required: true,
+    enum: ["imagen", "documento"]
   },
   archivo: {
-    type: String,  // URL o path del archivo
+    type: String,
     required: true
   },
   fechaSubida: {
@@ -50,7 +105,30 @@ const EvidenciaSchema = new Schema({
   descripcion: String
 });
 
-// Esquema principal del proyecto actualizado
+// Esquema para los donantes con montos específicos
+const DonanteProyectoSchema = new Schema({
+  donante: {
+    type: Schema.Types.ObjectId,
+    ref: "Donante",
+    required: [true, "El donante es requerido"]
+  },
+  montoAportado: {
+    type: Number,
+    required: [true, "El monto aportado es requerido"],
+    min: [0, "El monto aportado no puede ser negativo"]
+  },
+  porcentaje: {
+    type: Number,
+    min: [0, "El porcentaje no puede ser menor a 0"],
+    max: [100, "El porcentaje no puede ser mayor a 100"]
+  },
+  fechaCompromiso: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+// Esquema principal del proyecto
 const ProyectoSchema = new Schema(
   {
     numero: {
@@ -63,6 +141,11 @@ const ProyectoSchema = new Schema(
       required: true,
       trim: true,
     },
+    codigo: {
+      type: String,
+      unique: true,
+      required: true,
+    },
     objetivosGlobales: [{
       type: Schema.Types.ObjectId,
       ref: 'ObjetivoGlobal'
@@ -71,34 +154,25 @@ const ProyectoSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'LineaEstrategica'
     }],
-    actividadesPrincipales: [{
-      type: Schema.Types.ObjectId,
-      ref: 'ActividadPrincipal'
-    }],
     encargado: {
       type: Schema.Types.ObjectId,
-      ref: "Usuario", // Referencia a la colección Usuario
+      ref: "Usuario",
       required: true,
     },
-    donantes: [{
-      donante: {
-        type: Schema.Types.ObjectId,
-        ref: "Donante", // Referencia a la colección Donante
-        required: true,
-      },
-      porcentaje: {
-        type: Number, // Porcentaje del presupuesto que aporta este donante
-        required: true,
-        min: 0,
-        max: 100,
-      },
-    },
-  ], // Array de objetos para manejar múltiples donantes y sus porcentajes
     presupuesto: {
-      type: Number, // Presupuesto asignado al proyecto
-      required: true,
-      min: 0,
+      total: {
+        type: Number,
+        required: true,
+        min: [0, "El presupuesto total no puede ser negativo"]
+      },
+      ejecutado: {
+        type: Number,
+        default: 0,
+        min: [0, "El presupuesto ejecutado no puede ser negativo"]
+      }
     },
+    donantes: [DonanteProyectoSchema],
+    actividades: [ActividadSchema],
     personasAlcanzadas: {
       type: Number,
       default: 0
@@ -107,7 +181,6 @@ const ProyectoSchema = new Schema(
       beneficiario: {
         type: Schema.Types.ObjectId,
         ref: "Beneficiario",
-        required: true
       },
       estado: {
         type: String,
@@ -176,34 +249,79 @@ const ProyectoSchema = new Schema(
       proximoSeguimiento: Date
     },
     evidencias: [EvidenciaSchema],
-    observaciones: String,
-    codigo: {
-      type: String,
-      unique: true,
-      required: true,
-    }
+    observaciones: String
   },
   {
     timestamps: true,
   }
 );
 
-// Modelos
-const ObjetivoGlobal = mongoose.model('ObjetivoGlobal', ObjetivoGlobalSchema);
-const LineaEstrategica = mongoose.model('LineaEstrategica', LineaEstrategicaSchema);
-const ActividadPrincipal = mongoose.model('ActividadPrincipal', ActividadPrincipalSchema);
-const Proyecto = mongoose.model('Proyecto', ProyectoSchema);
+// Middleware para cálculos automáticos antes de guardar
+// Middleware para cálculos automáticos antes de guardar
+ProyectoSchema.pre('save', async function(next) {
+  try {
+    // 1. Calcular personas alcanzadas desde las actividades
+    if (this.actividades && this.actividades.length > 0) {
+      // Obtener beneficiarios únicos de todas las actividades
+      const beneficiariosUnicos = new Set();
+      
+      this.actividades.forEach(actividad => {
+        actividad.beneficiariosAsociados
+          .filter(b => b.estado === "Activo")
+          .forEach(b => {
+            beneficiariosUnicos.add(b.beneficiario.toString());
+          });
+      });
 
-ProyectoSchema.pre('save', function(next) {
-  if (this.beneficiarios) {
-    this.personasAlcanzadas = this.beneficiarios.filter(b => b.estado === "Activo").length;
+      // Actualizar el contador de personas alcanzadas
+      this.personasAlcanzadas = beneficiariosUnicos.size;
+    } else {
+      this.personasAlcanzadas = 0;
+    }
+
+    // 2. Calcular porcentajes y validar montos de donantes
+    if (this.donantes && this.donantes.length > 0) {
+      const totalAportes = this.donantes.reduce((sum, donante) => 
+        sum + donante.montoAportado, 0
+      );
+
+      if (totalAportes !== this.presupuesto.total) {
+        throw new Error('El total de aportes de los donantes debe ser igual al presupuesto total del proyecto');
+      }
+
+      this.donantes.forEach(donante => {
+        donante.porcentaje = (donante.montoAportado / this.presupuesto.total) * 100;
+      });
+    }
+
+    // 3. Validar y calcular presupuestos de actividades
+    if (this.actividades && this.actividades.length > 0) {
+      const totalActividades = this.actividades.reduce(
+        (sum, actividad) => sum + actividad.presupuestoAsignado, 
+        0
+      );
+
+      if (totalActividades > this.presupuesto.total) {
+        throw new Error('El presupuesto total de las actividades excede el presupuesto del proyecto');
+      }
+
+      this.actividades.forEach(actividad => {
+        actividad.porcentajePresupuesto = 
+          (actividad.presupuestoAsignado / this.presupuesto.total) * 100;
+      });
+
+      this.presupuesto.ejecutado = totalActividades;
+    }
+
+    next();
+  } catch (error) {
+    next(error);
   }
-  next();
 });
 
+// Exportar los modelos
 module.exports = {
-  ObjetivoGlobal,
-  LineaEstrategica,
-  ActividadPrincipal,
-  Proyecto
+  ObjetivoGlobal: mongoose.model('ObjetivoGlobal', ObjetivoGlobalSchema),
+  LineaEstrategica: mongoose.model('LineaEstrategica', LineaEstrategicaSchema),
+  Proyecto: mongoose.model('Proyecto', ProyectoSchema)
 };
