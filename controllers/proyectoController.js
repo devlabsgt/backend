@@ -315,9 +315,9 @@ router.get("/proyecto/:id", async (req, res) => {
 });
 
 // Actualizar proyecto
+// Actualizar proyecto
 router.put(
   "/proyecto/:id",
-  // auth, vRol(["Administrador", "Super"]),
   async (req, res) => {
     try {
       const actualizaciones = req.body;
@@ -333,20 +333,41 @@ router.put(
         );
       }
 
+      // Asegurar que los beneficiarios sean ObjectId válidos
       if (actualizaciones.beneficiarios) {
         actualizaciones.beneficiarios = actualizaciones.beneficiarios.map(
-          (b) => ({
+          b => typeof b === 'string' ? { 
+            beneficiario: mongoose.Types.ObjectId(b),
+            estado: "Activo",
+            fechaIngreso: new Date()
+          } : {
             ...b,
-            beneficiario: mongoose.Types.ObjectId(b.beneficiario),
+            beneficiario: mongoose.Types.ObjectId(b.beneficiario)
+          }
+        );
+      }
+
+      // Asegurar que los donantes sean ObjectId válidos
+      if (actualizaciones.donantes) {
+        actualizaciones.donantes = actualizaciones.donantes.map(
+          d => ({
+            ...d,
+            donante: mongoose.Types.ObjectId(d.donante)
           })
         );
       }
 
-      if (actualizaciones.donantes) {
-        actualizaciones.donantes = actualizaciones.donantes.map((d) => ({
-          ...d,
-          donante: mongoose.Types.ObjectId(d.donante),
-        }));
+      // Asegurar que las referencias sean ObjectId válidos
+      if (actualizaciones.objetivosGlobales) {
+        actualizaciones.objetivosGlobales = actualizaciones.objetivosGlobales.map(
+          id => mongoose.Types.ObjectId(id)
+        );
+      }
+
+      if (actualizaciones.lineasEstrategicas) {
+        actualizaciones.lineasEstrategicas = actualizaciones.lineasEstrategicas.map(
+          id => mongoose.Types.ObjectId(id)
+        );
       }
 
       const proyecto = await Proyecto.findByIdAndUpdate(
@@ -357,11 +378,33 @@ router.put(
           runValidators: true,
         }
       ).populate([
-        "encargado",
-        "donantes.donante",
-        "objetivosGlobales",
-        "lineasEstrategicas",
-        "beneficiarios.beneficiario",
+        {
+          path: "encargado",
+          select: "nombre email telefono"
+        },
+        {
+          path: "donantes.donante",
+          select: "nombre contacto email telefono"
+        },
+        {
+          path: "objetivosGlobales",
+          select: "nombre descripcion"
+        },
+        {
+          path: "lineasEstrategicas",
+          select: "nombre descripcion"
+        },
+        {
+          path: "beneficiarios.beneficiario",
+          model: "Beneficiario",
+          populate: {
+            path: "direccion"
+          }
+        },
+        {
+          path: "actividades.beneficiariosAsociados.beneficiario",
+          model: "Beneficiario"
+        }
       ]);
 
       if (!proyecto) {
