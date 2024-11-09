@@ -23,16 +23,20 @@ mongoose
   .connect(process.env.DB_URL, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 50000, // Tiempo de espera de 30 segundos
+    serverSelectionTimeoutMS: 50000, // 50 segundos de tiempo de espera
+    socketTimeoutMS: 45000, // 45 segundos de tiempo de espera para los sockets
+    connectTimeoutMS: 30000, // 30 segundos de tiempo de espera de conexión
+    autoReconnect: true, // Reintenta reconectar automáticamente
   })
   .then(() => {
-    console.log("MongoDB conectado" + process.env.DB_URL);
-    // Crear configuración de correo por defecto si no existe
-    ejecutarConfig();
-    // crearConfiguracionCorreoPorDefecto();
+    console.log("MongoDB conectado a " + process.env.DB_URL);
+    //ejecutarConfig(); // Ejecuta la configuración adicional
   })
   .catch((error) => {
-    console.error("Error conectando a MongoDB:", error.message);
+    console.error(
+      "Error conectando a MongoDB: " + error.message,
+      error.message
+    );
     process.exit(1); // Salir si hay un error de conexión
   });
 
