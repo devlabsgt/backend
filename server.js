@@ -27,7 +27,8 @@ mongoose
   .then(() => {
     console.log("MongoDB conectado");
     // Crear configuración de correo por defecto si no existe
-    crearConfiguracionCorreoPorDefecto();
+    ejecutarConfig();
+    // crearConfiguracionCorreoPorDefecto();
   })
   .catch((error) => {
     console.error("Error conectando a MongoDB:", error.message);
@@ -83,5 +84,3 @@ fs.mkdir(uploadsDir, { recursive: true }).catch(console.error);
 
 // Servir archivos estáticos
 app.use("/uploads", express.static("uploads"));
-
-ejecutarConfig();
