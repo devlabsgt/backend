@@ -290,7 +290,7 @@ ProyectoSchema.pre('save', async function(next) {
       }
 
       this.donantes.forEach(donante => {
-        donante.porcentaje = (donante.montoAportado / this.presupuesto.total) * 100;
+        donante.porcentaje = Number((donante.montoAportado / this.presupuesto.total * 100).toFixed(2));
       });
     }
 
