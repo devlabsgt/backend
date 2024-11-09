@@ -25,7 +25,7 @@ mongoose
     useUnifiedTopology: true,
   })
   .then(() => {
-    console.log("MongoDB conectado");
+    console.log("MongoDB conectado" + process.env.DB_URL);
     // Crear configuración de correo por defecto si no existe
     ejecutarConfig();
     // crearConfiguracionCorreoPorDefecto();
