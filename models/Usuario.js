@@ -11,9 +11,11 @@ const usuariosSchema = new Schema(
     rol: {
       type: String,
       enum: ["Super", "Administrador", "Encargado"],
-      default: "Admin",
+      default: "Administrador",
     },
+    sesion: { type: Boolean, default: false }, // Para manejo de usuarios inactivos
     activo: { type: Boolean, default: true }, // Para manejo de usuarios inactivos
+    verificado: { type: Boolean, default: false }, // Campo de verificación
   },
   { timestamps: true }
 );
