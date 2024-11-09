@@ -3,37 +3,93 @@ const router = express.Router();
 const Usuarios = require("../models/Usuario");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const nodemailer = require("nodemailer");
 const auth = require("../middleware/auth");
 const vRol = require("../middleware/vRol");
+const MailConfig = require("../models/MailConfig");
 
-//Función para crear un superusuario por defecto
-const crearSuperUsuarioPorDefecto = async () => {
+// Función para obtener la configuración de correo
+const obtenerConfiguracionCorreo = async () => {
+  const config = await MailConfig.findOne();
+  if (!config) {
+    throw new Error("Configuración de correo no encontrada");
+  }
+  return config;
+};
+
+// Función para generar un token de verificación
+const generarToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "1d" });
+};
+
+// Función para enviar el correo de verificación
+const enviarCorreoVerificacion = async (usuarioEmail, usuarioId) => {
+  const token = generarToken(usuarioId);
+  const config = await obtenerConfiguracionCorreo();
+
+  const transporter = nodemailer.createTransport({
+    host: config.smtpHost,
+    port: config.smtpPort,
+    secure: config.smtpPort === 465,
+    auth: {
+      user: config.emailSender,
+      pass: config.emailPassword,
+    },
+  });
+
+  const verificationLink = `${process.env.FRONTEND_URL}/verificar?token=${token}`;
+  const subject = "Verificación de cuenta";
+  const html = `
+    <div style="font-family: Arial, sans-serif; text-align: center;">
+      <h2 style="color: #333;">¡Bienvenido a Paz y Bien!</h2>
+      <p>Estamos encantados de tenerte como parte de nuestra comunidad.</p>
+      <a href="${verificationLink}" style="display: inline-block; padding: 10px 20px; background-color: #007BFF; color: #fff; text-decoration: none; border-radius: 5px;">
+        Verificar cuenta
+      </a>
+      <p>Si tienes alguna pregunta, no dudes en contactarnos:</p>
+      <a href="https://wa.me/502${config.telefono}" style="display: inline-block; padding: 10px 20px; background-color: #25D366; color: white; text-decoration: none; border-radius: 5px;">
+        Contactarnos por WhatsApp
+      </a>
+      <p>Si no solicitaste esta acción, ignora este mensaje.</p>
+    </div>
+  `;
+
+  await transporter.sendMail({
+    from: config.emailSender,
+    to: usuarioEmail,
+    subject,
+    html,
+  });
+};
+// Ruta para reenviar el correo de verificación
+router.post("/reenviar-verificacion", async (req, res) => {
+  const { email } = req.body;
+
   try {
-    const superUsuarioExistente = await Usuarios.findOne({ rol: "Super" });
-    if (superUsuarioExistente) {
-      console.log("Ya existe un superusuario. No se necesita crear uno nuevo.");
-      return;
+    // Buscar el usuario por su correo
+    const usuario = await Usuarios.findOne({ email });
+    if (!usuario) {
+      return res.status(404).json({ mensaje: "Usuario no encontrado" });
     }
 
-    const hashedPassword = await bcrypt.hash("superpyb", 10);
-    const nuevoSuperUsuario = new Usuarios({
-      nombre: "Super Usuario PyB",
-      email: "pyb@super.com",
-      password: hashedPassword,
-      telefono: "502",
-      rol: "Super",
-      fechaNacimiento: new Date(2000, 1, 1),
-    });
+    // Verificar si el usuario ya está verificado
+    if (usuario.verificado) {
+      return res.status(400).json({ mensaje: "La cuenta ya está verificada" });
+    }
 
-    await nuevoSuperUsuario.save();
-    console.log(
-      "Superusuario creado por defecto, recuerda cambiar el password."
-    );
+    // Enviar el correo de verificación
+    await enviarCorreoVerificacion(usuario.email, usuario._id);
+    res
+      .status(200)
+      .json({ mensaje: "Correo de verificación reenviado exitosamente" });
   } catch (error) {
-    console.error("Error al crear el superusuario por defecto:", error);
+    console.error("Error al reenviar correo de verificación:", error);
+    res
+      .status(500)
+      .json({ mensaje: "Error al reenviar el correo de verificación" });
   }
-};
-//Registrar usuario
+});
+// Registrar usuario
 router.post(
   "/usuario",
   auth,
@@ -60,8 +116,16 @@ router.post(
         fechaNacimiento,
       });
 
-      await usuario.save();
-      res.json({ mensaje: "Usuario creado correctamente" });
+      // Guardar usuario en la base de datos
+      const usuarioGuardado = await usuario.save();
+
+      // Enviar correo de verificación
+      await enviarCorreoVerificacion(usuario.email, usuarioGuardado._id);
+
+      res.json({
+        mensaje:
+          "Usuario creado correctamente. Se ha enviado un correo de verificación.",
+      });
     } catch (error) {
       // Enviar el mensaje de error detallado al frontend
       res.status(500).json({
@@ -71,6 +135,7 @@ router.post(
     }
   }
 );
+
 //Actualizar usuario
 router.put(
   "/usuario/:id",
@@ -132,18 +197,28 @@ router.post("/iniciarSesion", async (req, res) => {
   const { email, password } = req.body;
 
   try {
+    // Busca el usuario por email
     const usuario = await Usuarios.findOne({ email });
-    if (!usuario || !usuario.activo) {
-      return res
-        .status(401)
-        .json({ mensaje: "Usuario no existe o está inactivo" });
+
+    if (!usuario) {
+      return res.status(401).json({ mensaje: "Usuario no existe" });
     }
 
+    if (!usuario.activo) {
+      return res.status(403).json({ mensaje: "Usuario desactivado" });
+    }
+
+    if (!usuario.verificado) {
+      return res.status(403).json({ mensaje: "Usuario no verificado" });
+    }
+
+    // Verifica la contraseña
     const esValida = await bcrypt.compare(password, usuario.password);
     if (!esValida) {
       return res.status(401).json({ mensaje: "Contraseña incorrecta" });
     }
 
+    // Genera el token JWT
     const token = jwt.sign(
       {
         id: usuario._id,
@@ -152,21 +227,39 @@ router.post("/iniciarSesion", async (req, res) => {
         rol: usuario.rol,
       },
       process.env.JWT_SECRET,
-      { expiresIn: "2h" }
+      { expiresIn: "1d" }
     );
 
-    res.json({ token });
+    // Actualiza el campo `sesion` a `true` al iniciar sesión exitosamente
+    usuario.sesion = true;
+    await usuario.save();
+
+    // Responde con el token y los estados
+    res.json({ token, activo: usuario.activo, verificado: usuario.verificado });
   } catch (error) {
     res.status(500).json({ mensaje: "Error al autenticar", error });
   }
 });
+//cerrar sesion
+// Controlador de cierre de sesión actualizado
+router.put("/usuario/:id/cerrarsesion", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Cambia el estado de sesión a `false` sin condiciones adicionales
+    await Usuarios.findByIdAndUpdate(id, { sesion: false });
+    res.json({ mensaje: "Sesión cerrada exitosamente." });
+  } catch (error) {
+    res.status(500).json({ mensaje: "Error al cerrar la sesión", error });
+  }
+});
+
 //Obtener un usuario activo por su ID
+// Obtener un usuario activo por su ID
 router.get("/usuario/:id", auth, async (req, res) => {
   const { id } = req.params;
   try {
-    const usuario = await Usuarios.findOne({ _id: id }).select(
-      "nombre email telefono rol fechaNacimiento"
-    );
+    const usuario = await Usuarios.findById(id);
     if (!usuario) {
       return res.status(404).json({ mensaje: "Usuario no encontrado" });
     }
@@ -177,26 +270,11 @@ router.get("/usuario/:id", auth, async (req, res) => {
     res.status(500).json({ mensaje: "Error al obtener el usuario", error });
   }
 });
-//Obtener todos los usuarios activos
+// Obtener todos los usuarios con filtro opcional por rol y activo
+// Obtener todos los usuarios
 router.get("/usuario", auth, async (req, res) => {
-  const { rol, activo } = req.query; // Agregar `activo` como parámetro de consulta
-
   try {
-    const filtro = {}; // Crear un filtro vacío
-
-    // Aplicar filtro según el rol si existe
-    if (rol) {
-      filtro.rol = rol;
-    }
-
-    // Filtrar según el valor de `activo` proporcionado en la consulta
-    if (activo !== undefined) {
-      filtro.activo = activo === "true"; // Convertir el valor de `activo` a booleano
-    }
-
-    const usuarios = await Usuarios.find(filtro).select(
-      "nombre email telefono rol fechaNacimiento activo"
-    );
+    const usuarios = await Usuarios.find();
     const usuariosConEdad = usuarios.map((usuario) => ({
       ...usuario.toObject(),
       edad: usuario.edad,
@@ -207,8 +285,105 @@ router.get("/usuario", auth, async (req, res) => {
     res.status(500).json({ mensaje: "Error al obtener usuarios", error });
   }
 });
+
+// Ruta para verificar el usuario
+router.put("/verificar", async (req, res) => {
+  const { token } = req.body;
+
+  try {
+    // Verificar el token y extraer el ID del usuario
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const usuarioId = decoded.id;
+
+    // Buscar el usuario y actualizar el campo `verificado`
+    const usuario = await Usuarios.findByIdAndUpdate(
+      usuarioId,
+      { verificado: true },
+      { new: true }
+    );
+
+    if (!usuario) {
+      return res.status(404).json({ mensaje: "Usuario no encontrado" });
+    }
+
+    res.json({ mensaje: "Cuenta verificada exitosamente" });
+  } catch (error) {
+    console.error("Token verification error:", error); // Log detallado
+    res.status(400).json({
+      mensaje: "Token inválido o expirado",
+      error: error.message, // Detalles del error en la respuesta
+    });
+  }
+});
+
+// Ruta para enviar el link de recuperación de contraseña
+router.post("/recuperacion", async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const usuario = await Usuarios.findOne({ email }); // Cambiado a Usuarios
+    if (!usuario) {
+      return res.status(404).json({ mensaje: "Usuario no encontrado" });
+    }
+
+    const token = generarToken(usuario._id);
+    const linkRecuperacion = `${process.env.FRONTEND_URL}/restablecer?token=${token}`;
+
+    const config = await obtenerConfiguracionCorreo();
+
+    const transporter = nodemailer.createTransport({
+      host: config.smtpHost,
+      port: config.smtpPort,
+      secure: config.smtpPort === 465,
+      auth: {
+        user: config.emailSender,
+        pass: config.emailPassword,
+      },
+    });
+
+    const subject = "Recuperación de contraseña";
+    const html = `
+      <div style="font-family: Arial, sans-serif; text-align: center;">
+        <h2 style="color: #333;">Recuperación de contraseña</h2>
+        <p>Haga clic en el botón de abajo para ingresar una nueva contraseña:</p>
+        <a href="${linkRecuperacion}" style="display: inline-block; padding: 10px 20px; background-color: #007BFF; color: #fff; text-decoration: none; border-radius: 5px;">
+          Restablecer contraseña
+        </a>
+        <p>Si tienes alguna pregunta, no dudes en contactarnos:</p>
+        <a href="https://wa.me/${config.telefono}" style="display: inline-block; padding: 10px 20px; background-color: #25D366; color: white; text-decoration: none; border-radius: 5px;">
+          Contactarnos por WhatsApp
+        </a>
+        <p>Si no solicitó este cambio, simplemente ignore este correo.</p>
+      </div>
+    `;
+
+    const mailOptions = {
+      from: config.emailSender,
+      to: usuario.email,
+      subject,
+      html,
+    };
+
+    transporter.sendMail(mailOptions, (error) => {
+      if (error) {
+        return res
+          .status(500)
+          .json({ mensaje: "Error al enviar el correo", error });
+      } else {
+        return res
+          .status(200)
+          .json({ mensaje: "Link de recuperación enviado exitosamente" });
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({
+      mensaje: "Error al enviar el link de recuperación: " + error,
+    });
+  }
+});
+
 // Restablecer contraseña
-router.post("/usuario/resContra", async (req, res) => {
+router.post("/restablecer", async (req, res) => {
   const { token, newPassword } = req.body;
 
   try {
@@ -218,7 +393,7 @@ router.post("/usuario/resContra", async (req, res) => {
       return res.status(404).json({ mensaje: "Usuario no encontrado" });
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
     usuario.password = hashedPassword;
 
     await usuario.save();
@@ -237,8 +412,8 @@ router.post("/usuario/resContra", async (req, res) => {
     }
   }
 });
+
 //exportación de rutas funciones
 module.exports = {
   router,
-  crearSuperUsuarioPorDefecto,
 };

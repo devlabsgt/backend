@@ -26,7 +26,7 @@ const crearConfiguracionCorreoPorDefecto = async () => {
 };
 
 // Obtener la configuración de correo
-router.get("/correo/configuracion", async (req, res) => {
+router.get("/mailConfig", auth, vRol(["Super"]), async (req, res) => {
   try {
     const config = await MailConfig.findOne();
     if (!config) {
@@ -36,14 +36,15 @@ router.get("/correo/configuracion", async (req, res) => {
     }
     res.status(200).json(config);
   } catch (error) {
-    res
-      .status(500)
-      .json({ mensaje: "Error al obtener la configuración de correo", error });
+    res.status(500).json({
+      mensaje: "Error al obtener la configuración de correo",
+      error,
+    });
   }
 });
 
 // Actualizar la configuración de correo
-router.put("/correo/configuracion", async (req, res) => {
+router.put("/mailConfig", auth, vRol(["Super"]), async (req, res) => {
   try {
     const actualizaciones = req.body; // Obtener solo los campos recibidos en req.body
     const config = await MailConfig.findOneAndUpdate(
@@ -60,6 +61,4 @@ router.put("/correo/configuracion", async (req, res) => {
   }
 });
 
-module.exports = router;
-
-module.exports = { crearConfiguracionCorreoPorDefecto };
+module.exports = { router, crearConfiguracionCorreoPorDefecto };

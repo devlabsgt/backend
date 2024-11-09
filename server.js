@@ -6,15 +6,11 @@ const cors = require("cors");
 const path = require("path");
 const cron = require("node-cron");
 require("dotenv").config({ path: ".env" });
-const fs = require('fs').promises;
+const fs = require("fs").promises;
 
 const {
   crearConfiguracionCorreoPorDefecto,
 } = require("./controllers/mailConfigController");
-
-const {
-  crearSuperUsuarioPorDefecto,
-} = require("./controllers/usuariosController");
 
 const {
   actualizarEstadoFechaFinal,
@@ -31,8 +27,6 @@ mongoose
     console.log("MongoDB conectado");
     // Crear configuración de correo por defecto si no existe
     crearConfiguracionCorreoPorDefecto();
-    // Crear superusuario por defecto si no existe
-    crearSuperUsuarioPorDefecto();
   })
   .catch((error) => {
     console.error("Error conectando a MongoDB:", error.message);
@@ -83,9 +77,8 @@ app.listen(port, host, () => {
 });
 
 // Crear directorio de uploads si no existe
-const uploadsDir = path.join(__dirname, 'uploads', 'proyectos');
-fs.mkdir(uploadsDir, { recursive: true })
-  .catch(console.error);
+const uploadsDir = path.join(__dirname, "uploads", "proyectos");
+fs.mkdir(uploadsDir, { recursive: true }).catch(console.error);
 
 // Servir archivos estáticos
-app.use('/uploads', express.static('uploads'));
+app.use("/uploads", express.static("uploads"));

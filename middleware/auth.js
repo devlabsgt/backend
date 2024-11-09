@@ -3,6 +3,11 @@ const jwt = require("jsonwebtoken");
 module.exports = (req, res, next) => {
   const authHeader = req.get("Authorization");
 
+  // Permitir la ruta de cierre de sesión sin token
+  if (req.path === `/usuario/${req.params.id}/cerrarsesion`) {
+    return next();
+  }
+
   if (!authHeader) {
     return res.status(401).json({
       mensaje: "Debe de autenticarse para hacer esto",
