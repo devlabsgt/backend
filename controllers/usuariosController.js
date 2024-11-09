@@ -237,7 +237,7 @@ router.post("/iniciarSesion", async (req, res) => {
     // Responde con el token y los estados
     res.json({ token, activo: usuario.activo, verificado: usuario.verificado });
   } catch (error) {
-    res.status(500).json({ mensaje: "Error al autenticar", error });
+    res.status(500).json({ mensaje: "Error al autenticar "+error, error });
   }
 });
 //cerrar sesion
@@ -284,7 +284,7 @@ router.get("/usuario",
 
     res.json(usuariosConEdad);
   } catch (error) {
-    res.status(500).json({ mensaje: "Error al obtener usuarios", error });
+    res.status(500).json({ mensaje: "Error al obtener usuarios"+error, error });
   }
 });
 
