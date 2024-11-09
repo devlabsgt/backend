@@ -92,8 +92,8 @@ router.post("/reenviar-verificacion", async (req, res) => {
 // Registrar usuario
 router.post(
   "/usuario",
-  auth,
-  vRol(["Administrador", "Super"]),
+//  auth,
+//  vRol(["Administrador", "Super"]),
   async (req, res) => {
     const { nombre, email, password, telefono, rol, fechaNacimiento } =
       req.body;
@@ -272,7 +272,9 @@ router.get("/usuario/:id", auth, async (req, res) => {
 });
 // Obtener todos los usuarios con filtro opcional por rol y activo
 // Obtener todos los usuarios
-router.get("/usuario", auth, async (req, res) => {
+router.get("/usuario", 
+  // auth, 
+  async (req, res) => {
   try {
     const usuarios = await Usuarios.find();
     const usuariosConEdad = usuarios.map((usuario) => ({
