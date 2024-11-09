@@ -23,6 +23,7 @@ mongoose
   .connect(process.env.DB_URL, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 50000, // Tiempo de espera de 30 segundos
   })
   .then(() => {
     console.log("MongoDB conectado" + process.env.DB_URL);
