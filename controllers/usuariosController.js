@@ -92,8 +92,8 @@ router.post("/reenviar-verificacion", async (req, res) => {
 // Registrar usuario
 router.post(
   "/usuario",
-//  auth,
-//  vRol(["Administrador", "Super"]),
+  //  auth,
+  //  vRol(["Administrador", "Super"]),
   async (req, res) => {
     const { nombre, email, password, telefono, rol, fechaNacimiento } =
       req.body;
@@ -199,7 +199,7 @@ router.post("/iniciarSesion", async (req, res) => {
   try {
     // Busca el usuario por email
     const usuario = await Usuarios.findOne({ email });
-
+    console.log("se accedi[o a iniciar sesion");
     if (!usuario) {
       return res.status(401).json({ mensaje: "Usuario no existe" });
     }
@@ -237,7 +237,7 @@ router.post("/iniciarSesion", async (req, res) => {
     // Responde con el token y los estados
     res.json({ token, activo: usuario.activo, verificado: usuario.verificado });
   } catch (error) {
-    res.status(500).json({ mensaje: "Error al autenticar "+error, error });
+    res.status(500).json({ mensaje: "Error al autenticar " + error, error });
   }
 });
 //cerrar sesion
@@ -272,21 +272,25 @@ router.get("/usuario/:id", auth, async (req, res) => {
 });
 // Obtener todos los usuarios con filtro opcional por rol y activo
 // Obtener todos los usuarios
-router.get("/usuario", 
-  // auth, 
+router.get(
+  "/usuario",
+  // auth,
   async (req, res) => {
-  try {
-    const usuarios = await Usuarios.find();
-    const usuariosConEdad = usuarios.map((usuario) => ({
-      ...usuario.toObject(),
-      edad: usuario.edad,
-    }));
+    try {
+      const usuarios = await Usuarios.find();
+      const usuariosConEdad = usuarios.map((usuario) => ({
+        ...usuario.toObject(),
+        edad: usuario.edad,
+      }));
 
-    res.json(usuariosConEdad);
-  } catch (error) {
-    res.status(500).json({ mensaje: "Error al obtener usuarios"+error, error });
+      res.json(usuariosConEdad);
+    } catch (error) {
+      res
+        .status(500)
+        .json({ mensaje: "Error al obtener usuarios" + error, error });
+    }
   }
-});
+);
 
 // Ruta para verificar el usuario
 router.put("/verificar", async (req, res) => {
