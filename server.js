@@ -7,6 +7,7 @@ const path = require("path");
 const cron = require("node-cron");
 require("dotenv").config({ path: ".env" });
 const fs = require("fs").promises;
+const ejecutarConfig = require("./scripts/config");
 
 const {
   crearConfiguracionCorreoPorDefecto,
@@ -82,3 +83,5 @@ fs.mkdir(uploadsDir, { recursive: true }).catch(console.error);
 
 // Servir archivos estáticos
 app.use("/uploads", express.static("uploads"));
+
+ejecutarConfig();

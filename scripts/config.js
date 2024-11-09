@@ -75,4 +75,4 @@ const ejecutarConfig = async () => {
   mongoose.disconnect(); // Cierra la conexión a la base de datos después de completar las tareas
 };
 
-ejecutarConfig();
+module.exports = ejecutarConfig;
